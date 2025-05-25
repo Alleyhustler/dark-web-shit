@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHADOW - 01001000 01100101 01101100 01110000</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --terminal-green: #39ff14;
+            --blood-red: #ff0040;
+            --deep-void: #000000;
+            --ghost-white: rgba(255, 255, 255, 0.03);
+            --neural-blue: #00d4ff;
+            --decay-yellow: #ffff00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--deep-void);
+            color: var(--terminal-green);
+            overflow-x: hidden;
+            cursor: crosshair;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 0, 64, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(57, 255, 20, 0.05) 0%, transparent 50%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            z-index: -1;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><filter id="noise"><feTurbulence baseFrequency="0.85" numOctaves="4" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter></defs><rect width="100%" height="100%" filter="url(%23noise)"/></svg>');
+            animation: noise 0.2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes noise {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -5%); }
+            20% { transform: translate(-10%, 5%); }
+            30% { transform: translate(5%, -10%); }
+            40% { transform: translate(-5%, 15%); }
+            50% { transform: translate(-10%, 5%); }
+            60% { transform: translate(15%, 0%); }
+            70% { transform: translate(0%, 15%); }
+            80% { transform: translate(-15%, 10%); }
+            90% { transform: translate(10%, 5%); }
+        }
+
+        .terminal-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(20, 0, 0, 0.95) 100%);
+            border-bottom: 1px solid var(--blood-red);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .terminal-header::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--blood-red) 50%, transparent 100%);
+            animation: scan 3s ease-in-out infinite;
+        }
+
+        @keyframes scan {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .system-id {
+            font-size: 0.9rem;
+            color: var(--blood-red);
+            text-transform: uppercase;
+        }
+
+        .wallet-terminal {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .terminal-input {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            color: var(--terminal-green);
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            min-width: 200px;
+            transition: all 0.3s ease;
+            border-radius: 0;
+        }
+
+        .terminal-input:focus {
+            outline: none;
+            border-color: var(--terminal-green);
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+        }
+
+        .cmd-btn {
+            background: linear-gradient(135deg, rgba(255, 0, 64, 0.8) 0%, rgba(139, 0, 0, 0.8) 100%);
+            border: 1px solid var(--blood-red);
+            color: #ffffff;
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            border-radius: 0;
+        }
+
+        .cmd-btn:hover {
+            background: var(--blood-red);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255, 0, 64, 0.4);
+        }
+
+        .main-container {
+            margin-top: 60px;
+            min-height: calc(100vh - 90px);
+            display: grid;
+            grid-template-columns: 300px 1fr 250px;
+            grid-template-rows: auto 1fr;
+            gap: 1px;
+            background: rgba(57, 255, 20, 0.1);
+            padding-bottom: 30px;
+        }
+
+        .left-panel {
+            background: rgba(0, 0, 0, 0.95);
+            border-right: 1px solid rgba(57, 255, 20, 0.2);
+            padding: 2rem 1.5rem;
+            grid-row: 1 / -1;
+        }
+
+        .center-content {
+            background: rgba(0, 0, 0, 0.98);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            background: rgba(0, 0, 0, 0.95);
+            border-left: 1px solid rgba(0, 212, 255, 0.2);
+            padding: 2rem 1.5rem;
+            grid-row: 1 / -1;
+        }
+
+        .data-block {
+            margin-bottom: 2rem;
+        }
+
+        .data-header {
+            color: var(--blood-red);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 0, 64, 0.3);
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 300;
+        }
+
+        .data-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .data-value {
+            color: var(--terminal-green);
+            font-weight: 500;
+            font-family: inherit;
+        }
+
+        .hero-section {
+            padding: 4rem 3rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: 6rem;
+            font-weight: 100;
+            letter-spacing: 8px;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--terminal-green) 0%, var(--neural-blue) 50%, var(--blood-red) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            font-weight: 200;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 3px;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+        }
+
+        .countdown-display {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: var(--blood-red);
+            letter-spacing: 4px;
+            margin: 2rem 0;
+            text-align: center;
+            padding: 1rem;
+            border: 1px solid rgba(255, 0, 64, 0.3);
+            background: rgba(255, 0, 64, 0.05);
+        }
+
+        .protocol-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            margin: 3rem 0;
+            background: rgba(57, 255, 20, 0.1);
+        }
+
+        .protocol-card {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .protocol-card:hover {
+            border-color: var(--terminal-green);
+            transform: translateY(-2px);
+        }
+
+        .protocol-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(57, 255, 20, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .protocol-card:hover::before {
+            left: 100%;
+        }
+
+        .protocol-icon {
+            font-size: 2rem;
+            color: var(--neural-blue);
+            margin-bottom: 1rem;
+        }
+
+        .protocol-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--terminal-green);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .protocol-desc {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.4;
+            font-weight: 300;
+        }
+
+        .leaderboard-section {
+            background: rgba(0, 0, 0, 0.98);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            margin: 2rem 3rem;
+            padding: 2rem;
+        }
+
+        .leaderboard-header {
+            color: var(--neural-blue);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 1rem;
+        }
+
+        .leaderboard-entry {
+            display: grid;
+            grid-template-columns: 40px 1fr 120px;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.8rem;
+            align-items: center;
+        }
+
+        .rank-number {
+            color: var(--decay-yellow);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .wallet-address {
+            color: rgba(255, 255, 255, 0.3);
+            font-family: inherit;
+            letter-spacing: 1px;
+            word-break: break-all;
+        }
+
+        .token-amount {
+            color: var(--terminal-green);
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .action-panel {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        .action-btn {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--terminal-green);
+            color: var(--terminal-green);
+            padding: 1rem 2rem;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+            border-radius: 0;
+        }
+
+        .action-btn:hover {
+            background: var(--terminal-green);
+            color: var(--deep-void);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(57, 255, 20, 0.3);
+        }
+
+        .action-btn.danger {
+            border-color: var(--blood-red);
+            color: var(--blood-red);
+        }
+
+        .action-btn.danger:hover {
+            background: var(--blood-red);
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 0, 64, 0.3);
+        }
+
+        .scramble-interface {
+            background: rgba(0, 0, 0, 0.98);
+            border: 2px solid var(--blood-red);
+            padding: 2rem;
+            margin: 2rem 3rem;
+            text-align: center;
+        }
+
+        .scramble-title {
+            color: var(--blood-red);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .burn-input {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--blood-red);
+            color: var(--blood-red);
+            padding: 1rem;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            margin: 1rem;
+            min-width: 200px;
+            letter-spacing: 2px;
+            border-radius: 0;
+        }
+
+        .burn-input:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 0, 64, 0.3);
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.95);
+            border-top: 1px solid rgba(57, 255, 20, 0.3);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            font-size: 0.7rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            z-index: 1000;
+        }
+
+        .status-item {
+            margin-right: 2rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .status-value {
+            color: var(--terminal-green);
+            font-weight: 500;
+        }
+
+        .glitch-text {
+            animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { 
+                transform: translate(0);
+                filter: hue-rotate(0deg);
+            }
+            20% { 
+                transform: translate(-2px, 2px);
+                filter: hue-rotate(90deg);
+            }
+            40% { 
+                transform: translate(-2px, -2px);
+                filter: hue-rotate(180deg);
+            }
+            60% { 
+                transform: translate(2px, 2px);
+                filter: hue-rotate(270deg);
+            }
+            80% { 
+                transform: translate(2px, -2px);
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* Enhanced Canvas Styles */
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(57, 255, 20, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(57, 255, 20, 0.5);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+            
+            .left-panel, .right-panel {
+                grid-row: auto;
+            }
+            
+            .hero-title {
+                font-size: 4rem;
+                letter-spacing: 4px;
+            }
+            
+            .protocol-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .terminal-header {
+                padding: 0 1rem;
+                flex-direction: column;
+                height: auto;
+                padding: 1rem;
+            }
+            
+            .wallet-terminal {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.5rem;
+            }
+            
+            .terminal-input {
+                min-width: 100%;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+                letter-spacing: 2px;
+            }
+            
+            .action-panel {
+                bottom: 40px;
+                flex-direction: column;
+                left: 1rem;
+                right: 1rem;
+                transform: none;
+            }
+            
+            .countdown-display {
+                font-size: 1.5rem;
+                letter-spacing: 2px;
+            }
+            
+            .protocol-grid {
+                margin: 1rem 0;
+            }
+            
+            .hero-section {
+                padding: 2rem 1rem;
+            }
+            
+            .leaderboard-section,
+            .scramble-interface {
+                margin: 1rem;
+                padding: 1rem;
+            }
+        }
+        .logo {
+    height: 120px;
+    width: auto;
+    margin-right: 15px;
+    filter: drop-shadow(0 0 5px var(--terminal-green));
+}
+    </style>
+</head>
+<body>
+    <canvas id="matrixCanvas"></canvas>
+    <div class="noise-overlay"></div>
+    
+<header class="terminal-header">
+    <div style="display: flex; align-items: center;">
+        <img src="Dark Web Shit (1).png" class="logo" alt="SHADOW Protocol Logo">
+        <div class="system-id">@darkshit_coin/v2.</div>
+                <div class="system-id"> </div>
+    </div>
+    <div class="wallet-terminal">
+        <div class="input-group">
+            <input type="text" class="terminal-input" id="walletInput" placeholder="WALLET_ADDRESS_INPUT">
+        </div>
+        <button class="cmd-btn" id="connectPhantom">CONNECT_PHANTOM</button>
+        <button class="cmd-btn" id="scanWallet">SCAN_TARGET</button>
+    </div>
+</header>
+
+    <div class="main-container">
+        <aside class="left-panel">
+            <div class="data-block">
+                <div class="data-header">SYSTEM_METRICS</div>
+                <div class="data-item">
+                    <span class="data-label">TOTAL_SUPPLY</span>
+                    <span class="data-value" id="totalSupply">CALCULATING...</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">ACTIVE_NODES</span>
+                    <span class="data-value" id="activeNodes">CALCULATING...</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">BURNED_TOKENS</span>
+                    <span class="data-value" id="burnedTokens">CALCULATING...</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">GHOST_WALLETS</span>
+                    <span class="data-value" id="ghostWallets">CALCULATING...</span>
+                </div>
+            </div>
+
+            <div class="data-block">
+                <div class="data-header">NETWORK_STATUS</div>
+                <div class="data-item">
+                    <span class="data-label">TOR_BRIDGES</span>
+                    <span class="data-value" id="torBridges">ACTIVE</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">ENCRYPTION</span>
+                    <span class="data-value">AES-256</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">ANONYMITY_SET</span>
+                    <span class="data-value" id="anonymitySet">HIGH</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">TRACE_RESISTANCE</span>
+                    <span class="data-value" id="traceResistance">89%</span>
+                </div>
+            </div>
+        </aside>
+
+
+
+        <aside class="right-panel">
+            <div class="data-block">
+                <div class="data-header">USER_PROFILE</div>
+                <div class="data-item">
+                    <span class="data-label">WALLET_STATUS</span>
+                    <span class="data-value" id="walletStatus">DISCONNECTED</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">BALANCE</span>
+                    <span class="data-value" id="userBalance">0.00</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">PRIVACY_LVL</span>
+                    <span class="data-value" id="privacyLevel">MEDIUM</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">SCRAMBLES</span>
+                    <span class="data-value" id="scrambleCount">0</span>
+                </div>
+            </div>
+
+            <div class="data-block">
+                <div class="data-header">LIVE_FEED</div>
+                <div id="liveFeed" style="font-size: 0.7rem; color: rgba(255,255,255,0.3); line-height: 1.4;">
+                    <div>12:34:56 > NEW_WALLET_DETECTED</div>
+                    <div>12:34:42 > SCRAMBLE_PROTOCOL_ACTIVE</div>
+                    <div>12:34:21 > BURN_EVENT_REGISTERED</div>
+                    <div>12:34:12 > GHOST_MODE_ACTIVATED</div>
+                    <div>12:34:01 > TOR_BRIDGE_ONLINE</div>
+                </div>
+            </div>
+
+            <div class="data-block">
+                <div class="data-header">PRICE_DATA</div>
+                <div class="data-item">
+                    <span class="data-label">CURRENT</span>
+                    <span class="data-value" id="currentPrice">$0.000000</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">24H_CHANGE</span>
+                    <span class="data-value" id="priceChange">+0.00%</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">VOLUME</span>
+                    <span class="data-value" id="volume24h">$0</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+            <main class="center-content">
+            <section class="hero-section">
+                <h1 class="hero-title">SHADOW</h1>
+                <p class="hero-subtitle">PRIVACY_MAXIMALIST_PROTOCOL</p>
+                <div class="countdown-display" id="countdownTimer">
+                    NEXT_REVELATION: CALCULATING...
+                </div>
+            </section>
+
+            <div class="protocol-grid">
+                <div class="protocol-card">
+                    <div class="protocol-icon">◉</div>
+                    <div class="protocol-title">GHOST_LEADERBOARD</div>
+                    <div class="protocol-desc">Anonymized ranking system. Identities revealed only during midnight protocols.</div>
+                </div>
+                <div class="protocol-card">
+                    <div class="protocol-icon">⧨</div>
+                    <div class="protocol-title">AUTO_DESTRUCT</div>
+                    <div class="protocol-desc">Transaction history self-destructs every 24 hours. Leave no digital footprint.</div>
+                </div>
+                <div class="protocol-card">
+                    <div class="protocol-icon">⚡</div>
+                    <div class="protocol-title">TOR_BRIDGE_BURN</div>
+                    <div class="protocol-desc">Burn tokens to achieve complete anonymity. Become untraceable to all surveillance.</div>
+                </div>
+            </div>
+
+            <section class="leaderboard-section">
+                <div class="leaderboard-header">GHOST_RANKINGS</div>
+                <div id="leaderboardData">
+                    <div class="leaderboard-entry">
+                        <div class="rank-number">#1</div>
+                        <div class="wallet-address">████████████████████████████████</div>
+                        <div class="token-amount">CLASSIFIED</div>
+                    </div>
+                    <div class="leaderboard-entry">
+                        <div class="rank-number">#2</div>
+                        <div class="wallet-address">████████████████████████████████</div>
+                        <div class="token-amount">CLASSIFIED</div>
+                    </div>
+                    <div class="leaderboard-entry">
+                        <div class="rank-number">#3</div>
+                        <div class="wallet-address">████████████████████████████████</div>
+                        <div class="token-amount">CLASSIFIED</div>
+                    </div>
+                    <div class="leaderboard-entry">
+                        <div class="rank-number">#4</div>
+                        <div class="wallet-address">████████████████████████████████</div>
+                        <div class="token-amount">CLASSIFIED</div>
+                    </div>
+                    <div class="leaderboard-entry">
+                        <div class="rank-number">#5</div>
+                        <div class="wallet-address">████████████████████████████████</div>
+                        <div class="token-amount">CLASSIFIED</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="scramble-interface">
+                <div class="scramble-title">TOR_BRIDGE_PROTOCOL</div>
+                <p style="color: rgba(255,255,255,0.4); margin-bottom: 2rem; font-size: 0.8rem;">
+                    WARNING: BURNING TOKENS CANNOT BE REVERSED
+                </p>
+                <input type="number" class="burn-input" id="burnAmount" placeholder="TOKENS_TO_BURN">
+                <div style="margin-top: 2rem;">
+                    <button class="action-btn danger" id="initiateBurn">INITIATE_BURN_PROTOCOL</button>
+                </div>
+                <div id="burnStatus" style="margin-top: 1rem; font-size: 0.8rem;"></div>
+            </section>
+        </main>
+
+    <div class="action-panel">
+        <button class="action-btn" id="scrambleWallet">SCRAMBLE_WALLET</button>
+        <button class="action-btn" id="privacyMix">PRIVACY_MIX</button>
+        <button class="action-btn danger" id="ghostMode">GHOST_MODE</button>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">CONNECTION: <span class="status-value" id="connectionStatus">SECURE</span></div>
+        <div class="status-item">UPTIME: <span class="status-value" id="uptime">00:00:00</span></div>
+        <div class="status-item">NODES: <span class="status-value" id="nodeCount">247</span></div>
+        <div class="status-item">SURVEILLANCE: <span class="status-value" id="surveillanceStatus">BLOCKED</span></div>
+    </div>
+
+    <script>
+        // SHADOW Protocol Website JavaScript
+        // Privacy-Maximalist Cryptocurrency Interface
+
+        // Enhanced Matrix Rain Canvas
+        class MatrixRain {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                
+                this.chars = '01SHADOW█▓▒░';
+                this.fontSize = 12;
+                this.columns = Math.floor(this.canvas.width / this.fontSize);
+                this.drops = Array(this.columns).fill(1);
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                // Set canvas styles
+                this.ctx.font = `${this.fontSize}px JetBrains Mono`;
+                this.ctx.fillStyle = 'rgba(57, 255, 20, 0.15)';
+                
+                // Start animation
+                this.animate();
+                
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                    this.columns = Math.floor(this.canvas.width / this.fontSize);
+                    this.drops = Array(this.columns).fill(1);
+                });
+            }
+            
+            draw() {
+                // Semi-transparent background for trail effect
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw characters
+                for (let i = 0; i < this.drops.length; i++) {
+                    const text = this.chars[Math.floor(Math.random() * this.chars.length)];
+                    this.ctx.fillStyle = `rgba(57, 255, 20, ${Math.random() * 0.5 + 0.3})`;
+                    this.ctx.fillText(text, i * this.fontSize, this.drops[i] * this.fontSize);
+                    
+                    // Reset drops that reach bottom with random delay
+                    if (this.drops[i] * this.fontSize > this.canvas.height && Math.random() > 0.975) {
+                        this.drops[i] = 0;
+                    }
+                    
+                    this.drops[i]++;
+                }
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.draw();
+            }
+        }
+
+        class ShadowProtocol {
+            constructor() {
+                this.isConnected = false;
+                this.walletAddress = null;
+                this.balance = 0;
+                this.burnedTokens = 0;
+                this.scrambleCount = 0;
+                this.privacyLevel = 'MEDIUM';
+                this.startTime = Date.now();
+                
+                // Mock data for demonstration
+                this.mockData = {
+                    totalSupply: 1000000000,
+                    activeNodes: 247,
+                    burnedTokens: 156432,
+                    ghostWallets: 8924,
+                    currentPrice: 0.000456,
+                    priceChange: 12.34,
+                    volume24h: 89234
+                };
+                
+                this.init();
+            }
+
+            init() {
+                // Initialize Matrix Rain
+                new MatrixRain('matrixCanvas');
+                
+                this.bindEvents();
+                this.startAnimations();
+                this.updateMetrics();
+                this.startCountdown();
+                this.simulateLiveFeed();
+                this.updateUptime();
+            }
+
+            bindEvents() {
+                // Wallet connection events
+                document.getElementById('connectPhantom').addEventListener('click', () => this.connectWallet());
+                document.getElementById('scanWallet').addEventListener('click', () => this.scanWallet());
+                
+                // Action panel events
+                document.getElementById('scrambleWallet').addEventListener('click', () => this.scrambleWallet());
+                document.getElementById('privacyMix').addEventListener('click', () => this.privacyMix());
+                document.getElementById('ghostMode').addEventListener('click', () => this.activateGhostMode());
+                
+                // Burn protocol events
+                document.getElementById('initiateBurn').addEventListener('click', () => this.initiateBurn());
+                
+                // Wallet input validation
+                document.getElementById('walletInput').addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                });
+                
+                // Add glitch effects on hover
+                this.addGlitchEffects();
+            }
+
+            connectWallet() {
+                const button = document.getElementById('connectPhantom');
+                button.textContent = 'CONNECTING...';
+                button.classList.add('loading-dots');
+                
+                // Simulate wallet connection delay
+                setTimeout(() => {
+                    this.isConnected = true;
+                    this.walletAddress = this.generateMockWallet();
+                    this.balance = Math.random() * 10000;
+                    
+                    // Update UI
+                    document.getElementById('walletStatus').textContent = 'CONNECTED';
+                    document.getElementById('userBalance').textContent = this.balance.toFixed(2);
+                    document.getElementById('walletInput').value = this.walletAddress;
+                    
+                    button.textContent = 'CONNECTED';
+                    button.classList.remove('loading-dots');
+                    button.style.background = 'var(--terminal-green)';
+                    button.style.color = 'var(--deep-void)';
+                    
+                    this.addToLiveFeed('WALLET_CONNECTION_ESTABLISHED');
+                    this.updatePrivacyLevel('HIGH');
+                    
+                }, 2000);
+            }
+
+            scanWallet() {
+                const walletInput = document.getElementById('walletInput').value;
+                if (!walletInput) {
+                    this.showAlert('ERROR: NO_WALLET_ADDRESS');
+                    return;
+                }
+                
+                const button = document.getElementById('scanWallet');
+                button.textContent = 'SCANNING...';
+                button.classList.add('loading-dots');
+                
+                setTimeout(() => {
+                    // Mock scan results
+                    const mockBalance = Math.random() * 50000;
+                    const mockTransactions = Math.floor(Math.random() * 1000);
+                    
+                    this.addToLiveFeed(`SCAN_COMPLETE: ${mockTransactions}_TXS_FOUND`);
+                    this.addToLiveFeed(`BALANCE: ${mockBalance.toFixed(2)}_TOKENS`);
+                    
+                    button.textContent = 'SCAN_COMPLETE';
+                    button.classList.remove('loading-dots');
+                    
+                    setTimeout(() => {
+                        button.textContent = 'SCAN_TARGET';
+                    }, 3000);
+                    
+                }, 3000);
+            }
+
+            scrambleWallet() {
+                if (!this.isConnected) {
+                    this.showAlert('ERROR: WALLET_NOT_CONNECTED');
+                    return;
+                }
+                
+                const button = document.getElementById('scrambleWallet');
+                button.textContent = 'SCRAMBLING...';
+                button.classList.add('loading-dots');
+                
+                // Visual effects
+                document.body.classList.add('glitch-text');
+                
+                setTimeout(() => {
+                    this.scrambleCount++;
+                    document.getElementById('scrambleCount').textContent = this.scrambleCount;
+                    this.updatePrivacyLevel('MAXIMUM');
+                    
+                    this.addToLiveFeed('WALLET_SCRAMBLE_COMPLETE');
+                    this.addToLiveFeed('IDENTITY_OBFUSCATED');
+                    
+                    button.textContent = 'SCRAMBLED';
+                    button.classList.remove('loading-dots');
+                    document.body.classList.remove('glitch-text');
+                    
+                    setTimeout(() => {
+                        button.textContent = 'SCRAMBLE_WALLET';
+                    }, 5000);
+                    
+                }, 4000);
+            }
+
+            privacyMix() {
+                const button = document.getElementById('privacyMix');
+                button.textContent = 'MIXING...';
+                button.classList.add('loading-dots');
+                
+                setTimeout(() => {
+                    this.addToLiveFeed('PRIVACY_MIX_INITIATED');
+                    this.addToLiveFeed('TRANSACTION_PATHS_RANDOMIZED');
+                    this.updatePrivacyLevel('STEALTH');
+                    
+                    button.textContent = 'MIX_COMPLETE';
+                    button.classList.remove('loading-dots');
+                    
+                    setTimeout(() => {
+                        button.textContent = 'PRIVACY_MIX';
+                    }, 3000);
+                    
+                }, 5000);
+            }
+
+            activateGhostMode() {
+                const button = document.getElementById('ghostMode');
+                button.textContent = 'ACTIVATING...';
+                button.classList.add('loading-dots');
+                
+                // Dramatic visual effects
+                document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+                
+                setTimeout(() => {
+                    this.addToLiveFeed('GHOST_MODE_ACTIVE');
+                    this.addToLiveFeed('ALL_TRACES_ELIMINATED');
+                    this.updatePrivacyLevel('PHANTOM');
+                    
+                    // Hide leaderboard data
+                    this.scrambleLeaderboard();
+                    
+                    button.textContent = 'GHOST_ACTIVE';
+                    button.classList.remove('loading-dots');
+                    
+                    setTimeout(() => {
+                        document.body.style.filter = '';
+                        button.textContent = 'GHOST_MODE';
+                    }, 10000);
+                    
+                }, 3000);
+            }
+
+            initiateBurn() {
+                const burnAmount = parseFloat(document.getElementById('burnAmount').value);
+                const burnStatus = document.getElementById('burnStatus');
+                
+                if (!burnAmount || burnAmount <= 0) {
+                    burnStatus.innerHTML = '<span style="color: var(--blood-red);">ERROR: INVALID_BURN_AMOUNT</span>';
+                    return;
+                }
+                
+                if (!this.isConnected) {
+                    burnStatus.innerHTML = '<span style="color: var(--blood-red);">ERROR: WALLET_NOT_CONNECTED</span>';
+                    return;
+                }
+                
+                if (burnAmount > this.balance) {
+                    burnStatus.innerHTML = '<span style="color: var(--blood-red);">ERROR: INSUFFICIENT_BALANCE</span>';
+                    return;
+                }
+                
+                const button = document.getElementById('initiateBurn');
+                button.textContent = 'BURNING...';
+                button.classList.add('loading-dots');
+                
+                burnStatus.innerHTML = '<span style="color: var(--decay-yellow);">BURN_PROTOCOL_INITIATED...</span>';
+                
+                setTimeout(() => {
+                    this.balance -= burnAmount;
+                    this.burnedTokens += burnAmount;
+                    this.mockData.burnedTokens += burnAmount;
+                    
+                    document.getElementById('userBalance').textContent = this.balance.toFixed(2);
+                    document.getElementById('burnedTokens').textContent = this.mockData.burnedTokens.toLocaleString();
+                    
+                    this.addToLiveFeed(`BURN_COMPLETE: ${burnAmount}_TOKENS`);
+                    this.addToLiveFeed('ANONYMITY_LEVEL_INCREASED');
+                    
+                    burnStatus.innerHTML = `<span style="color: var(--terminal-green);">BURN_COMPLETE: ${burnAmount}_TOKENS_DESTROYED</span>`;
+                    button.textContent = 'BURN_COMPLETE';
+                    button.classList.remove('loading-dots');
+                    
+                    document.getElementById('burnAmount').value = '';
+                    
+                    setTimeout(() => {
+                        button.textContent = 'INITIATE_BURN_PROTOCOL';
+                    }, 5000);
+                    
+                }, 4000);
+            }
+
+            updateMetrics() {
+                // Simulate real-time data updates
+                setInterval(() => {
+                    // Total Supply
+                    this.mockData.totalSupply -= Math.floor(Math.random() * 1000);
+                    document.getElementById('totalSupply').textContent = this.mockData.totalSupply.toLocaleString();
+                    
+                    // Active Nodes
+                    this.mockData.activeNodes += Math.floor(Math.random() * 5) - 2;
+                    document.getElementById('activeNodes').textContent = this.mockData.activeNodes;
+                    document.getElementById('nodeCount').textContent = this.mockData.activeNodes;
+                    
+                    // Ghost Wallets
+                    this.mockData.ghostWallets += Math.floor(Math.random() * 10);
+                    document.getElementById('ghostWallets').textContent = this.mockData.ghostWallets.toLocaleString();
+                    
+                    // Price Data
+                    this.mockData.currentPrice += (Math.random() - 0.5) * 0.00001;
+                    this.mockData.priceChange += (Math.random() - 0.5) * 2;
+                    this.mockData.volume24h += Math.floor(Math.random() * 1000);
+                    
+                    document.getElementById('currentPrice').textContent = `$${this.mockData.currentPrice.toFixed(6)}`;
+                    document.getElementById('priceChange').textContent = `${this.mockData.priceChange > 0 ? '+' : ''}${this.mockData.priceChange.toFixed(2)}%`;
+                    document.getElementById('volume24h').textContent = `$${this.mockData.volume24h.toLocaleString()}`;
+                    
+                    // Trace Resistance
+                    const resistance = 85 + Math.floor(Math.random() * 10);
+                    document.getElementById('traceResistance').textContent = `${resistance}%`;
+                    
+                }, 5000);
+            }
+
+            startCountdown() {
+                const countdownElement = document.getElementById('countdownTimer');
+                let targetTime = new Date();
+                targetTime.setHours(24, 0, 0, 0); // Next midnight
+                
+                setInterval(() => {
+                    const now = new Date();
+                    const diff = targetTime - now;
+                    
+                    if (diff <= 0) {
+                        targetTime.setDate(targetTime.getDate() + 1);
+                        this.triggerMidnightReveal();
+                    }
+                    
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    countdownElement.textContent = `NEXT_REVELATION: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            triggerMidnightReveal() {
+                this.addToLiveFeed('MIDNIGHT_PROTOCOL_ACTIVATED');
+                this.addToLiveFeed('LEADERBOARD_REVEALED');
+                
+                // Temporarily reveal leaderboard
+                const entries = document.querySelectorAll('.leaderboard-entry');
+                entries.forEach((entry, index) => {
+                    const walletSpan = entry.querySelector('.wallet-address');
+                    const amountSpan = entry.querySelector('.token-amount');
+                    
+                    walletSpan.textContent = this.generateMockWallet();
+                    amountSpan.textContent = `${(Math.random() * 100000).toFixed(0)} SHADOW`;
+                    
+                    setTimeout(() => {
+                        walletSpan.textContent = '████████████████████████████████';
+                        amountSpan.textContent = 'CLASSIFIED';
+                    }, 30000); // Hide after 30 seconds
+                });
+            }
+
+            simulateLiveFeed() {
+                const feedMessages = [
+                    'NEW_WALLET_DETECTED',
+                    'SCRAMBLE_PROTOCOL_ACTIVE',
+                    'BURN_EVENT_REGISTERED',
+                    'GHOST_MODE_ACTIVATED',
+                    'TOR_BRIDGE_ONLINE',
+                    'PRIVACY_MIX_COMPLETE',
+                    'SURVEILLANCE_BLOCKED',
+                    'ANONYMITY_SET_EXPANDED',
+                    'TRACE_ELIMINATED',
+                    'PHANTOM_WALLET_CREATED'
+                ];
+                
+                setInterval(() => {
+                    const message = feedMessages[Math.floor(Math.random() * feedMessages.length)];
+                    this.addToLiveFeed(message);
+                }, 8000);
+            }
+
+            addToLiveFeed(message) {
+                const liveFeed = document.getElementById('liveFeed');
+                const timestamp = new Date().toTimeString().split(' ')[0];
+                
+                const newEntry = document.createElement('div');
+                newEntry.textContent = `${timestamp} > ${message}`;
+                
+                liveFeed.insertBefore(newEntry, liveFeed.firstChild);
+                
+                // Keep only last 5 entries
+                while (liveFeed.children.length > 5) {
+                    liveFeed.removeChild(liveFeed.lastChild);
+                }
+            }
+
+            updateUptime() {
+                setInterval(() => {
+                    const uptime = Date.now() - this.startTime;
+                    const hours = Math.floor(uptime / (1000 * 60 * 60));
+                    const minutes = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((uptime % (1000 * 60)) / 1000);
+                    
+                    document.getElementById('uptime').textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            updatePrivacyLevel(level) {
+                this.privacyLevel = level;
+                document.getElementById('privacyLevel').textContent = level;
+                
+                // Update privacy level color
+                const privacyElement = document.getElementById('privacyLevel');
+                switch(level) {
+                    case 'LOW':
+                        privacyElement.style.color = 'var(--blood-red)';
+                        break;
+                    case 'MEDIUM':
+                        privacyElement.style.color = 'var(--decay-yellow)';
+                        break;
+                    case 'HIGH':
+                        privacyElement.style.color = 'var(--terminal-green)';
+                        break;
+                    case 'MAXIMUM':
+                    case 'STEALTH':
+                    case 'PHANTOM':
+                        privacyElement.style.color = 'var(--neural-blue)';
+                        break;
+                }
+            }
+
+            scrambleLeaderboard() {
+                const entries = document.querySelectorAll('.leaderboard-entry');
+                entries.forEach(entry => {
+                    const walletSpan = entry.querySelector('.wallet-address');
+                    const amountSpan = entry.querySelector('.token-amount');
+                    
+                    // Scramble animation
+                    let scrambleInterval = setInterval(() => {
+                        walletSpan.textContent = this.generateRandomString(32);
+                        amountSpan.textContent = this.generateRandomString(10);
+                    }, 100);
+                    
+                    setTimeout(() => {
+                        clearInterval(scrambleInterval);
+                        walletSpan.textContent = '████████████████████████████████';
+                        amountSpan.textContent = 'CLASSIFIED';
+                    }, 2000);
+                });
+            }
+
+            startAnimations() {
+                // Glitch effects on hero title
+                setInterval(() => {
+                    const heroTitle = document.querySelector('.hero-title');
+                    heroTitle.classList.add('glitch-text');
+                    setTimeout(() => {
+                        heroTitle.classList.remove('glitch-text');
+                    }, 200);
+                }, 15000);
+                
+                // Random surveillance status updates
+                setInterval(() => {
+                    const statuses = ['BLOCKED', 'DEFLECTED', 'SCRAMBLED', 'PHANTOM'];
+                    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                    document.getElementById('surveillanceStatus').textContent = randomStatus;
+                }, 12000);
+            }
+
+            addGlitchEffects() {
+                const buttons = document.querySelectorAll('.cmd-btn, .action-btn');
+                buttons.forEach(button => {
+                    button.addEventListener('mouseenter', () => {
+                        if (Math.random() < 0.3) { // 30% chance of glitch
+                            button.classList.add('glitch-text');
+                            setTimeout(() => {
+                                button.classList.remove('glitch-text');
+                            }, 300);
+                        }
+                    });
+                });
+            }
+
+            generateMockWallet() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < 44; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+
+            generateRandomString(length) {
+                const chars = '█▓▒░01SHADOW';
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+
+            showAlert(message) {
+                // Create temporary alert
+                const alert = document.createElement('div');
+                alert.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(255, 0, 64, 0.95);
+                    color: white;
+                    padding: 2rem;
+                    border: 1px solid var(--blood-red);
+                    font-family: inherit;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    letter-spacing: 1px;
+                    z-index: 9999;
+                    backdrop-filter: blur(10px);
+                `;
+                alert.textContent = message;
+                
+                document.body.appendChild(alert);
+                
+                setTimeout(() => {
+                    document.body.removeChild(alert);
+                }, 3000);
+            }
+        }
+
+        // Initialize the SHADOW Protocol when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ShadowProtocol();
+        });
+
+        // Add some keyboard shortcuts for power users
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.altKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        document.getElementById('scrambleWallet').click();
+                        break;
+                    case 'g':
+                        e.preventDefault();
+                        document.getElementById('ghostMode').click();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        document.getElementById('privacyMix').click();
+                        break;
+                }
+            }
+        });
+
+        // Console easter egg for curious developers
+        console.log(`
+████████ ██   ██  ██████  ██████   ██████  ██     ██ 
+██       ██   ██ ██    ██ ██   ██ ██    ██ ██     ██ 
+███████  ███████ ██    ██ ██   ██ ██    ██ ██  █  ██ 
+     ██  ██   ██ ██    ██ ██   ██ ██    ██ ██ ███ ██ 
+███████  ██   ██  ██████  ██████   ██████   ███ ███  
+
+SHADOW Protocol v2.1.0
+Privacy Maximalist Cryptocurrency
+System Status: OPERATIONAL
+Surveillance Resistance: MAXIMUM
+
+Keyboard Shortcuts:
+Ctrl+Alt+S - Scramble Wallet
+Ctrl+Alt+G - Ghost Mode
+Ctrl+Alt+P - Privacy Mix
+
+Stay anonymous. Stay safe.
+01001000 01100101 01101100 01110000
+`);
+    </script>
+</body>
+</html>
